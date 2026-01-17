@@ -26,7 +26,6 @@ import com.minecraft.core.punish.PunishCategory;
 import com.minecraft.core.punish.PunishType;
 import com.minecraft.core.server.Server;
 import com.minecraft.core.server.packet.ServerPayload;
-import com.minecraft.core.translation.Language;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -522,14 +521,6 @@ public class Account {
         return getRanks().stream().anyMatch(rankData -> rankData.getRank() == rank);
     }
 
-    public Language getLanguage() {
-        return getProperty("account_language").getAs(Language.class);
-    }
-
-    public void setLanguage(Language language) {
-        setProperty("account_language", language);
-    }
-
     public void loadRanks() {
         getRanks().clear();
 
@@ -736,12 +727,12 @@ public class Account {
         ServerPayload payload = route.getRoute().getServer().getBreath();
 
         if (payload.getPort() == Constants.getServerStorage().myPort()) {
-            accountExecutor.sendMessage(getLanguage().translate("already_connected"));
+            accountExecutor.sendMessage("Você já está conectado neste servidor.");
             return;
         }
 
         if (!hasPermission(Rank.VIP) && payload.getOnlinePlayers() >= payload.getMaxPlayers()) {
-            accountExecutor.sendMessage(getLanguage().translate("server_is_full", Constants.SERVER_STORE));
+            accountExecutor.sendMessage(String.format("O servidor está cheio. Adquira VIP em %s.", Constants.SERVER_STORE));
             return;
         }
 

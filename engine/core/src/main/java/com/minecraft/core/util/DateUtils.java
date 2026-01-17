@@ -6,8 +6,6 @@
 
 package com.minecraft.core.util;
 
-import com.minecraft.core.translation.Language;
-
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
@@ -16,52 +14,28 @@ import java.util.regex.Pattern;
 
 public class DateUtils {
 
-    public static String formatTime(Language language, int i) {
-        if (language == Language.ENGLISH) {
-            if (i >= 60) {
-                int minutes = i / 60;
-                int seconds = i - minutes * 60;
-                if (seconds == 0) {
-                    if (minutes > 1) {
-                        return minutes + " minutes";
-                    } else {
-                        return minutes + " minute";
-                    }
+    public static String formatTime(int i) {
+        if (i >= 60) {
+            int minutes = i / 60;
+            int seconds = i - minutes * 60;
+            if (seconds == 0) {
+                if (minutes > 1) {
+                    return minutes + " minutos";
+                } else {
+                    return minutes + " minuto";
                 }
-                String min = "minute";
-                String second = "second";
-                if (minutes > 1)
-                    min = min + "s";
-                if (seconds > 1)
-                    second = second + "s";
-                return minutes + " " + min + " and " + seconds + " " + second;
             }
-            if (i > 1)
-                return i + " seconds";
-            return i + " second";
-        } else {
-            if (i >= 60) {
-                int minutes = i / 60;
-                int seconds = i - minutes * 60;
-                if (seconds == 0) {
-                    if (minutes > 1) {
-                        return minutes + " minutos";
-                    } else {
-                        return minutes + " minuto";
-                    }
-                }
-                String min = "minuto";
-                String second = "segundo";
-                if (minutes > 1)
-                    min = min + "s";
-                if (seconds > 1)
-                    second = second + "s";
-                return minutes + " " + min + " e " + seconds + " " + second;
-            }
-            if (i > 1)
-                return i + " segundos";
-            return i + " segundo";
+            String min = "minuto";
+            String second = "segundo";
+            if (minutes > 1)
+                min = min + "s";
+            if (seconds > 1)
+                second = second + "s";
+            return minutes + " " + min + " e " + seconds + " " + second;
         }
+        if (i > 1)
+            return i + " segundos";
+        return i + " segundo";
     }
 
     public static String toMillis(final double d) {
@@ -82,8 +56,8 @@ public class DateUtils {
         return sb.toString();
     }
 
-    private static String fromLong(final long lenth, Language language, Style style) {
-        if (language == Language.PORTUGUESE && style == Style.NORMAL) {
+    private static String fromLong(final long lenth, Style style) {
+        if (style == Style.NORMAL) {
             final int days = (int) TimeUnit.SECONDS.toDays(lenth);
             final long hours = TimeUnit.SECONDS.toHours(lenth) - days * 24;
             final long minutes = TimeUnit.SECONDS.toMinutes(lenth) - TimeUnit.SECONDS.toHours(lenth) * 60L;
@@ -108,33 +82,6 @@ public class DateUtils {
             restingTime = restingTime.trim();
             if (restingTime.equals("")) {
                 restingTime = "0 segundos";
-            }
-            return restingTime;
-        } else if (language == Language.ENGLISH && style == Style.NORMAL) {
-            final int days = (int) TimeUnit.SECONDS.toDays(lenth);
-            final long hours = TimeUnit.SECONDS.toHours(lenth) - days * 24;
-            final long minutes = TimeUnit.SECONDS.toMinutes(lenth) - TimeUnit.SECONDS.toHours(lenth) * 60L;
-            final long seconds = TimeUnit.SECONDS.toSeconds(lenth) - TimeUnit.SECONDS.toMinutes(lenth) * 60L;
-            String totalDay = String.valueOf(days) + ((days == 1) ? " day " : " days ");
-            String totalHours = String.valueOf(hours) + ((hours == 1L) ? " hour " : " hours ");
-            String totalMinutes = String.valueOf(minutes) + ((minutes == 1L) ? " minute " : " minutes ");
-            String totalSeconds = String.valueOf(seconds) + ((seconds == 1L) ? " second" : " seconds");
-            if (days == 0) {
-                totalDay = "";
-            }
-            if (hours == 0L) {
-                totalHours = "";
-            }
-            if (minutes == 0L) {
-                totalMinutes = "";
-            }
-            if (seconds == 0L) {
-                totalSeconds = "";
-            }
-            String restingTime = String.valueOf(totalDay) + totalHours + totalMinutes + totalSeconds;
-            restingTime = restingTime.trim();
-            if (restingTime.equals("")) {
-                restingTime = "0 seconds";
             }
             return restingTime;
         } else if (style == Style.SIMPLIFIED) {
@@ -195,19 +142,19 @@ public class DateUtils {
     public static String formatDifference(final long time) {
         final long timeLefting = time - System.currentTimeMillis();
         final long seconds = timeLefting / 1000L;
-        return fromLong(seconds, Language.ENGLISH, Style.NORMAL);
+        return fromLong(seconds, Style.NORMAL);
     }
 
-    public static String formatDifference(final long time, Language language, Style style) {
+    public static String formatDifference(final long time, Style style) {
         final long timeLefting = time - System.currentTimeMillis();
         final long seconds = timeLefting / 1000L;
-        return fromLong(seconds, language, style);
+        return fromLong(seconds, style);
     }
 
     public static String formatDifference(final long highTime, long lowTime) {
         final long timeLefting = highTime - lowTime;
         final long seconds = timeLefting / 1000L;
-        return fromLong(seconds, Language.ENGLISH, Style.NORMAL);
+        return fromLong(seconds, Style.NORMAL);
     }
 
     public static long parseDateDiff(final String time, final boolean future) throws Exception {

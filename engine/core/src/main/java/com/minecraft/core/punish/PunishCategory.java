@@ -7,7 +7,6 @@
 package com.minecraft.core.punish;
 
 import com.minecraft.core.enums.Rank;
-import com.minecraft.core.translation.Language;
 import lombok.Getter;
 
 import java.util.Arrays;
@@ -56,8 +55,8 @@ public enum PunishCategory {
         return applicablePunishments.contains(punishType);
     }
 
-    public String getDisplay(Language language) {
-        return language == Language.PORTUGUESE ? this.portuguese : this.english;
+    public String getDisplay() {
+        return this.portuguese;
     }
 
     public static PunishCategory fromString(String value) {

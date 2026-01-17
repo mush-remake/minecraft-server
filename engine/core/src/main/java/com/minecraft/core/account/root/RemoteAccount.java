@@ -12,7 +12,6 @@ import com.minecraft.core.account.datas.RankData;
 import com.minecraft.core.account.fields.Flag;
 import com.minecraft.core.database.enums.Columns;
 import com.minecraft.core.enums.Rank;
-import com.minecraft.core.translation.Language;
 
 import java.util.Collections;
 import java.util.Set;
@@ -23,11 +22,6 @@ public class RemoteAccount extends Account {
         super(Constants.CONSOLE_UUID, "[SERVER]");
         getData(Columns.PREMIUM).setData(true);
         setProperty("isAdmin", true);
-    }
-
-    @Override
-    public Language getLanguage() {
-        return Language.ENGLISH;
     }
 
     @Override

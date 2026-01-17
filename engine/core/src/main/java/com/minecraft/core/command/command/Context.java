@@ -12,8 +12,7 @@ import com.minecraft.core.command.CommandFrame;
 import com.minecraft.core.command.argument.TypeAdapter;
 import com.minecraft.core.command.platform.Platform;
 import com.minecraft.core.enums.Rank;
-import com.minecraft.core.translation.Language;
-import com.minecraft.core.translation.TranslationExecutor;
+import java.util.Locale;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -155,11 +154,7 @@ public interface Context<S> {
     }
 
     default void info(String key, Object... objects) {
-        sendMessage(TranslationExecutor.tl(getLanguage(), key, objects));
-    }
-
-    default Language getLanguage() {
-        return Constants.getAccountStorage().getAccount(getUniqueId()).getLanguage();
+        sendMessage(String.format(Locale.ROOT, key, objects));
     }
 
     /**
