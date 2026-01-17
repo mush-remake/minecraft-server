@@ -6,11 +6,18 @@
 
 package com.minecraft.core.database.mysql;
 
-import java.sql.*;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class MySQL {
 
     private final MySQLProperties properties;
+    private HikariDataSource dataSource;
     private Connection connection;
 
     public MySQL(MySQLProperties properties) {
@@ -18,11 +25,32 @@ public class MySQL {
     }
 
     public MySQL connect() {
+        if (this.dataSource != null && !this.dataSource.isClosed()) {
+            return this;
+        }
+
+        HikariConfig config = new HikariConfig();
+
+        String url = "jdbc:postgresql://" + properties.getHost() + ":" + properties.getPort() + "/" + properties.getDatabase();
+
+        config.setJdbcUrl(url);
+        config.setUsername(properties.getUsername());
+        config.setPassword(properties.getPassword());
+        config.setMaximumPoolSize(10);
+        config.setMinimumIdle(2);
+        config.setPoolName("core-postgresql-pool");
+        config.setConnectionTimeout(10000L);
+        config.setIdleTimeout(600000L);
+        config.setMaxLifetime(1800000L);
+
+        this.dataSource = new HikariDataSource(config);
+
         try {
-            this.connection = DriverManager.getConnection("jdbc:mysql://" + properties.getHost() + ":" + properties.getPort() + "/" + properties.getDatabase() + "?user=" + properties.getUsername() + "&password=" + properties.getPassword() + "&autoReconnect=true&characterEncoding=utf8&useConfigs=maxPerformance&callableStmtCacheSize=400&useSSL=false");
+            this.connection = this.dataSource.getConnection();
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
+
         return this;
     }
 
@@ -38,6 +66,19 @@ public class MySQL {
 
     public Connection getConnection() {
         return connection;
+    }
+
+    public void close() {
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
+        } catch (SQLException ignored) {
+        }
+
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
+        }
     }
 
 }

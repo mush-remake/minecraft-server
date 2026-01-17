@@ -31,6 +31,7 @@ dependencies {
     implementation("com.googlecode.json-simple:json-simple:1.1.1")
     implementation("com.google.code.gson:gson:2.8.5")
     implementation("org.postgresql:postgresql:42.7.3")
+    implementation("com.zaxxer:HikariCP:5.0.1")
     implementation("redis.clients:jedis:2.9.0")
     compileOnly("com.mojang:authlib:1.5.21")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
