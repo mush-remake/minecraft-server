@@ -12,6 +12,7 @@ import lombok.Setter;
 import java.sql.ResultSet;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.postgresql.util.PGobject;
 
 @Getter
 @Setter
@@ -28,6 +29,8 @@ public class Clan {
     private String color;
 
     public Clan(int index, String name, String tag, int slots, long creation, int points, String color) {
+        if (name == null || name.isEmpty()) throw new IllegalArgumentException("name");
+        if (tag == null || tag.isEmpty()) throw new IllegalArgumentException("tag");
         this.index = index;
         this.name = name;
         this.tag = tag;
@@ -95,7 +98,8 @@ public class Clan {
             int index = resultSet.getInt("index");
             String name = resultSet.getString("name");
             String tag = resultSet.getString("tag");
-            String rawJson = resultSet.getString("members");
+            Object mObj = resultSet.getObject("members");
+            String rawJson = (mObj instanceof PGobject) ? ((PGobject) mObj).getValue() : String.valueOf(mObj);
             int slots = resultSet.getInt("slots");
             int points = resultSet.getInt("points");
             long creation = resultSet.getLong("creation");

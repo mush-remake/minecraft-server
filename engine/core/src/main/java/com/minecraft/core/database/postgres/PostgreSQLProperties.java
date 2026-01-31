@@ -1,10 +1,4 @@
-/*
- * Copyright (C) YoloMC, All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential.
- */
-
-package com.minecraft.core.database.mysql;
+package com.minecraft.core.database.postgres;
 
 import com.minecraft.core.Constants;
 import lombok.AllArgsConstructor;
@@ -18,14 +12,14 @@ import java.io.FileWriter;
 
 @AllArgsConstructor
 @Getter
-public class MySQLProperties {
+public class PostgreSQLProperties {
 
     private final String host;
     private final int port;
     private final String username, password, database;
 
-    public static MySQLProperties load(File file) {
-        MySQLProperties properties = new MySQLProperties("localhost", 3306, "server", "yumrWaCYdYINenasgjxeos5xJKJ1xxx", "minecraft");
+    public static PostgreSQLProperties load(File file) {
+        PostgreSQLProperties properties = new PostgreSQLProperties("localhost", 5432, "server", "pass", "minecraft");
         if (!file.exists()) {
             try (FileWriter writer = new FileWriter(file)) {
                 writer.write(Constants.GSON.toJson(properties));
@@ -35,7 +29,7 @@ public class MySQLProperties {
         } else {
             JSONParser jsonParser = new JSONParser();
             try {
-                properties = Constants.GSON.fromJson(((JSONObject) jsonParser.parse(new FileReader(file))).toJSONString(), MySQLProperties.class);
+                properties = Constants.GSON.fromJson(((JSONObject) jsonParser.parse(new FileReader(file))).toJSONString(), PostgreSQLProperties.class);
             } catch (Exception e) {
                 e.printStackTrace();
             }

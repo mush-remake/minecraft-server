@@ -1,9 +1,3 @@
-/*
- * Copyright (C) YoloMC, All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- */
-
 package com.minecraft.core.account;
 
 import com.google.gson.JsonArray;
@@ -64,6 +58,8 @@ public class Account {
     private final DataStorage dataStorage;
 
     public Account(UUID uniqueId, String username) {
+        if (uniqueId == null) throw new IllegalArgumentException("uniqueId");
+        if (username == null || username.isEmpty()) throw new IllegalArgumentException("username");
         this.dataStorage = new DataStorage(this.uniqueId = uniqueId, this.username = username);
     }
 

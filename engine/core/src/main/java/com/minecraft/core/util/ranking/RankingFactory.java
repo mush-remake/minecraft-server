@@ -1,9 +1,3 @@
-/*
- * Copyright (C) YoloMC, All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential.
- */
-
 package com.minecraft.core.util.ranking;
 
 import com.minecraft.core.Constants;
@@ -83,12 +77,12 @@ public class RankingFactory {
         Columns ranking = getTarget().getRanking();
         Columns exp = getTarget().getExperience();
 
-        String query = "SELECT `unique_id` FROM " + ranking.getTable().getName() + " WHERE " + ranking.getField() + " IS NOT NULL AND " + exp.getField() + " IS NOT NULL AND `" + ranking.getField() + "`=" + Ranking.MASTER_IV.getId() + " ORDER BY " + exp.getField() + " DESC LIMIT 5;";
+        String query = "SELECT unique_id FROM " + ranking.getTable().getName() + " WHERE " + ranking.getField() + " IS NOT NULL AND " + exp.getField() + " IS NOT NULL AND " + ranking.getField() + "=" + Ranking.MASTER_IV.getId() + " ORDER BY " + exp.getField() + " DESC LIMIT 5;";
 
         List<UUID> besties = new ArrayList<>();
 
         try {
-            PreparedStatement preparedStatement = Constants.getMySQL().getConnection().prepareStatement(query);
+            PreparedStatement preparedStatement = Constants.getPostgreSQL().getConnection().prepareStatement(query);
             ResultSet resultSet = preparedStatement.executeQuery();
 
             while (resultSet.next()) {

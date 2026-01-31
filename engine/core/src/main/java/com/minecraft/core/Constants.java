@@ -1,9 +1,3 @@
-/*
- * Copyright (C) YoloMC, All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- */
-
 package com.minecraft.core;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -13,7 +7,7 @@ import com.minecraft.core.account.AccountStorage;
 import com.minecraft.core.account.system.AccountDeposit;
 import com.minecraft.core.clan.service.ClanService;
 import com.minecraft.core.database.mojang.MojangAPI;
-import com.minecraft.core.database.mysql.MySQL;
+import com.minecraft.core.database.postgres.PostgreSQL;
 import com.minecraft.core.database.redis.Redis;
 import com.minecraft.core.server.ServerCategory;
 import com.minecraft.core.server.ServerStorage;
@@ -30,17 +24,17 @@ import java.util.regex.Pattern;
 
 public class Constants {
 
+
+
     /**
-     * MySQL connection
+     * PostgreSQL connection
      */
-    public static MySQL mySQL;
+    public static PostgreSQL postgreSQL;
 
-    public static MySQL getMySQL() {
-        return mySQL;
-    }
+    public static PostgreSQL getPostgreSQL() { return postgreSQL; }
 
-    public static void setMySQL(MySQL mySQL) {
-        Constants.mySQL = mySQL;
+    public static void setPostgreSQL(PostgreSQL postgreSQL) {
+        Constants.postgreSQL = postgreSQL;
     }
 
     /**

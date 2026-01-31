@@ -1,22 +1,17 @@
-/*
- * Copyright (C) YoloMC, All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- */
-
 package com.minecraft.core.account;
 
 import com.minecraft.core.Constants;
 import com.minecraft.core.account.root.RemoteAccount;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import java.util.Collection;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class AccountStorage {
 
-    private final Map<UUID, Account> accountMap = new ConcurrentHashMap<>();
+    private final Object2ObjectMap<UUID, Account> accountMap = Object2ObjectMaps.synchronize(new Object2ObjectOpenHashMap<>());
     /*  private final Set<Account> pendingUnload = new HashSet<>();
 
     public Account queueUnload(UUID uuid, long unloadAfter, Consumer<Account> consumer) {

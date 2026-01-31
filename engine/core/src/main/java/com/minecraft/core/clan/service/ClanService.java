@@ -2,11 +2,11 @@ package com.minecraft.core.clan.service;
 
 import com.minecraft.core.Constants;
 import com.minecraft.core.clan.Clan;
+import org.postgresql.util.PGobject;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +20,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ClanService {
 
     private final Map<Integer, Clan> clanMap = new ConcurrentHashMap<>();
+
+    public ClanService() {
+        try {
+            PreparedStatement ps = Constants.getPostgreSQL().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS clans (index SERIAL PRIMARY KEY, name VARCHAR(16) NOT NULL, tag VARCHAR(16) NOT NULL, members JSONB NOT NULL, slots INT NOT NULL, points INT NOT NULL, creation BIGINT NOT NULL, color VARCHAR(16) NOT NULL)");
+            ps.execute();
+            ps.close();
+        } catch (SQLException ignored) {
+        }
+    }
 
     public Clan getClan(int index) {
         return clanMap.computeIfAbsent(index, this::loadClan);
@@ -47,9 +56,9 @@ public class ClanService {
 
     private Clan loadClan(int index) {
 
-        String query = "SELECT * FROM `clans` WHERE `index`= ? LIMIT 1;";
+        String query = "SELECT * FROM clans WHERE index = ? LIMIT 1;";
 
-        try (PreparedStatement statement = Constants.getMySQL().getConnection().prepareStatement(query)) {
+        try (PreparedStatement statement = Constants.getPostgreSQL().getConnection().prepareStatement(query)) {
             statement.setInt(1, index);
             try (ResultSet resultSet = statement.executeQuery()) {
                 return (resultSet.next() ? Clan.parse(resultSet) : null);
@@ -61,9 +70,9 @@ public class ClanService {
 
     private Clan loadClan(String name) {
 
-        String query = "SELECT * FROM `clans` WHERE `name`= ? OR `tag`= ? LIMIT 1;";
+        String query = "SELECT * FROM clans WHERE name = ? OR tag = ? LIMIT 1;";
 
-        try (PreparedStatement statement = Constants.getMySQL().getConnection().prepareStatement(query)) {
+        try (PreparedStatement statement = Constants.getPostgreSQL().getConnection().prepareStatement(query)) {
             statement.setString(1, name);
             statement.setString(2, name);
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -75,11 +84,14 @@ public class ClanService {
     }
 
     public void pushClan(Clan clan) throws SQLException {
-        String query = "UPDATE `clans` SET `tag`= ?, `members` = ?, `slots` = ?, `creation` = ?, `points` = ? WHERE `index` = ? LIMIT 1;";
+        String query = "UPDATE clans SET tag = ?, members = ?, slots = ?, creation = ?, points = ? WHERE index = ?";
 
-        try (PreparedStatement ps = Constants.getMySQL().getConnection().prepareStatement(query)) {
+        try (PreparedStatement ps = Constants.getPostgreSQL().getConnection().prepareStatement(query)) {
             ps.setString(1, clan.getTag());
-            ps.setString(2, Constants.GSON.toJson(clan.getMembers()));
+            PGobject jsonb = new PGobject();
+            jsonb.setType("jsonb");
+            jsonb.setValue(Constants.GSON.toJson(clan.getMembers()));
+            ps.setObject(2, jsonb);
             ps.setInt(3, clan.getSlots());
             ps.setLong(4, clan.getCreation());
             ps.setInt(5, clan.getPoints());
@@ -90,21 +102,24 @@ public class ClanService {
 
     public void register(Clan clan) throws SQLException {
 
-        String query = "INSERT INTO `clans`(`name`, `tag`, `members`, `slots`, `points`, `creation`, `color`) VALUES (?, ?, ?, ?, ?, ?, ?);";
+        String query = "INSERT INTO clans(name, tag, members, slots, points, creation, color) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING index;";
 
-        try (PreparedStatement ps = Constants.getMySQL().getConnection().prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = Constants.getPostgreSQL().getConnection().prepareStatement(query)) {
             ps.setString(1, clan.getName());
             ps.setString(2, clan.getTag());
-            ps.setString(3, Constants.GSON.toJson(clan.getMembers()));
+            PGobject jsonb = new PGobject();
+            jsonb.setType("jsonb");
+            jsonb.setValue(Constants.GSON.toJson(clan.getMembers()));
+            ps.setObject(3, jsonb);
             ps.setInt(4, clan.getSlots());
             ps.setInt(5, clan.getPoints());
             ps.setLong(6, clan.getCreation());
             ps.setString(7, clan.getColor());
 
-            int updateCount = ps.executeUpdate();
-
-            if (updateCount > 0) {
-                clan.setIndex(Constants.getMySQL().insertId(ps));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    clan.setIndex(rs.getInt(1));
+                }
             }
 
             clanMap.put(clan.getIndex(), clan);
@@ -118,9 +133,9 @@ public class ClanService {
         if (clan != null)
             return true;
 
-        String sql = "SELECT `index` FROM `clans` WHERE `name` = LOWER(?) OR `tag` = LOWER(?) LIMIT 1";
+        String sql = "SELECT index FROM clans WHERE name = LOWER(?) OR tag = LOWER(?) LIMIT 1";
 
-        try (PreparedStatement ps = Constants.getMySQL().getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = Constants.getPostgreSQL().getConnection().prepareStatement(sql)) {
 
             ps.setString(1, name.toLowerCase());
             ps.setString(2, tag.toLowerCase());
@@ -135,9 +150,9 @@ public class ClanService {
     }
 
     public boolean delete(Clan clan) throws SQLException {
-        String sql = "DELETE FROM `clans` WHERE `index` = ? LIMIT 1";
+        String sql = "DELETE FROM clans WHERE index = ?";
 
-        try (PreparedStatement ps = Constants.getMySQL().getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = Constants.getPostgreSQL().getConnection().prepareStatement(sql)) {
             ps.setInt(1, clan.getIndex());
 
             boolean successful = ps.executeUpdate() > 0;

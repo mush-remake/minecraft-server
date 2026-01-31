@@ -2,9 +2,7 @@
  * Copyright (C) Pedrudo (persona), All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
- */
-
-package com.minecraft.core.command.exception;
+ */package com.minecraft.core.command.exception;
 
 import com.minecraft.core.command.message.MessageType;
 import lombok.NoArgsConstructor;

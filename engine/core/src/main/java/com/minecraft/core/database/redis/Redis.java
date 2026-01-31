@@ -1,9 +1,3 @@
-/*
- * Copyright (C) YoloMC, All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential.
- */
-
 package com.minecraft.core.database.redis;
 
 import com.google.gson.JsonObject;
@@ -22,7 +16,6 @@ public class Redis implements AutoCloseable {
     public static String PROFILE_UPDATE_CHANNEL = "a";
     public static String SERVER_REDIRECT_CHANNEL = "b";
     public static String NICK_DISGUISE_CHANNEL = "c";
-    public static String LANGUAGE_UPDATE_CHANNEL = "d";
     public static String RANK_UPDATE_CHANNEL = "e";
     public static String FLAG_UPDATE_CHANNEL = "f";
     public static String SERVER_COMMUNICATION_CHANNEL = "g";
@@ -48,7 +41,7 @@ public class Redis implements AutoCloseable {
         jedisPoolConfig.setBlockWhenExhausted(false);
 
         this.jedisPool = new JedisPool(jedisPoolConfig, "localhost", 6379, 5000);
-        Constants.setAccountDeposit(new AccountDeposit(getResource()));
+        Constants.setAccountDeposit(new AccountDeposit());
     }
 
     public void publish(String channel, String type, Consumer<JsonObject> jsonConsumer) {
