@@ -1,10 +1,4 @@
-/*
- * Copyright (C) YoloMC, All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential.
- */
-
-package com.minecraft.core.database.mysql;
+package com.minecraft.core.database.postgres;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -14,17 +8,17 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class MySQL {
+public class PostgreSQL {
 
-    private final MySQLProperties properties;
+    private final PostgreSQLProperties properties;
     private HikariDataSource dataSource;
     private Connection connection;
 
-    public MySQL(MySQLProperties properties) {
+    public PostgreSQL(PostgreSQLProperties properties) {
         this.properties = properties;
     }
 
-    public MySQL connect() {
+    public PostgreSQL connect() {
         if (this.dataSource != null && !this.dataSource.isClosed()) {
             return this;
         }
@@ -56,16 +50,48 @@ public class MySQL {
 
     public int insertId(PreparedStatement ps) throws SQLException {
         ResultSet rs = ps.getGeneratedKeys();
-
         if (rs.next()) {
             return rs.getInt(1);
         }
-
         throw new IllegalStateException("Nenhuma chave auto gerada foi encontrada");
     }
 
     public Connection getConnection() {
+        try {
+            if (connection == null || connection.isClosed() || !connection.isValid(2)) {
+                int attempts = 0;
+                long delay = 1000L;
+                while (attempts < 3) {
+                    try {
+                        connection = dataSource.getConnection();
+                        if (connection != null && connection.isValid(2)) break;
+                    } catch (SQLException ignored) {
+                    }
+                    attempts++;
+                    try {
+                        Thread.sleep(delay);
+                    } catch (InterruptedException ignored) {
+                    }
+                    delay *= 2;
+                }
+            }
+        } catch (SQLException ignored) {
+        }
         return connection;
+    }
+
+    public void beginTransaction() throws SQLException {
+        connection.setAutoCommit(false);
+    }
+
+    public void commitTransaction() throws SQLException {
+        connection.commit();
+        connection.setAutoCommit(true);
+    }
+
+    public void rollbackTransaction() throws SQLException {
+        connection.rollback();
+        connection.setAutoCommit(true);
     }
 
     public void close() {
@@ -80,5 +106,4 @@ public class MySQL {
             dataSource.close();
         }
     }
-
 }

@@ -1,9 +1,3 @@
-/*
- * Copyright (C) YoloMC, All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- */
-
 package com.minecraft.core.database.data;
 
 import com.google.gson.JsonArray;
@@ -18,6 +12,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import org.postgresql.util.PGobject;
 
 public class DataStorage {
 
@@ -72,17 +67,28 @@ public class DataStorage {
      */
     public void saveTable(Tables... tables) {
         try {
+            boolean transactional = tables.length > 1;
+            if (transactional) {
+                Constants.getPostgreSQL().beginTransaction();
+            }
             for (Tables table : tables) {
-                String s = update(table, table.getColumns());
-                if (!s.isEmpty()) {
-                    PreparedStatement statement = Constants.getMySQL().getConnection().prepareStatement(s);
-                    statement.executeUpdate();
-                    statement.close();
-                } else {
+                List<Columns> changed = Arrays.stream(table.getColumns())
+                        .filter(c -> getData(c).hasChanged())
+                        .collect(Collectors.toList());
+                if (changed.isEmpty()) {
                     System.out.println("Nothing to save to " + table.getName() + " from " + username + "'s account.");
+                    continue;
                 }
+                upsertRow(table, changed.toArray(new Columns[0]));
+            }
+            if (transactional) {
+                Constants.getPostgreSQL().commitTransaction();
             }
         } catch (SQLException exception) {
+            try {
+                Constants.getPostgreSQL().rollbackTransaction();
+            } catch (SQLException ignored) {
+            }
             exception.printStackTrace();
         }
     }
@@ -96,12 +102,7 @@ public class DataStorage {
             return;
 
         try {
-            String s = update(column.getTable(), column);
-            if (!s.isEmpty()) {
-                PreparedStatement preparedStatement = Constants.getMySQL().getConnection().prepareStatement(s);
-                preparedStatement.executeUpdate();
-                preparedStatement.close();
-            }
+            upsertRow(column.getTable(), column);
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
@@ -112,12 +113,13 @@ public class DataStorage {
      */
     public void saveColumnsFromSameTable(Columns... columns) {
         try {
-            String s = update(columns[0].getTable(), columns);
-            if (!s.isEmpty()) {
-                PreparedStatement preparedStatement = Constants.getMySQL().getConnection().prepareStatement(s);
-                preparedStatement.executeUpdate();
-                preparedStatement.close();
+            List<Columns> changed = Arrays.stream(columns)
+                    .filter(c -> getData(c).hasChanged())
+                    .collect(Collectors.toList());
+            if (changed.isEmpty()) {
+                return;
             }
+            upsertRow(columns[0].getTable(), changed.toArray(new Columns[0]));
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
@@ -144,14 +146,15 @@ public class DataStorage {
                 stringBuilder.append(" ");
             }
 
-            stringBuilder.append("FROM `accounts` accounts ");
+            stringBuilder.append("FROM accounts accounts ");
 
             for (Tables table : tables) {
-                stringBuilder.append("LEFT JOIN `").append(table.getName()).append("` ").append(table.getName()).append(" ON accounts.unique_id = ").append(table.getName()).append(".unique_id ");
+                stringBuilder.append("LEFT JOIN ").append(table.getName()).append(" ").append(table.getName()).append(" ON accounts.unique_id = ").append(table.getName()).append(".unique_id ");
             }
-            stringBuilder.append("WHERE accounts.unique_id='").append(uniqueId.toString()).append("'").append(" LIMIT 1;");
+            stringBuilder.append("WHERE accounts.unique_id=? LIMIT 1;");
 
-            PreparedStatement preparedStatement = Constants.getMySQL().getConnection().prepareStatement(stringBuilder.toString());
+            PreparedStatement preparedStatement = Constants.getPostgreSQL().getConnection().prepareStatement(stringBuilder.toString());
+            preparedStatement.setObject(1, uniqueId);
             ResultSet resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {
@@ -196,18 +199,19 @@ public class DataStorage {
             while (inx < max) {
                 Columns current = columns[inx];
                 if (inx == 0)
-                    stringBuilder.append("`").append(current.getField()).append("`");
+                    stringBuilder.append(current.getField());
                 else
-                    stringBuilder.append(", `").append(current.getField()).append("`");
+                    stringBuilder.append(", ").append(current.getField());
                 inx++;
             }
 
             Tables table = columns[0].getTable();
 
-            stringBuilder.append(" FROM `").append(table.getName()).append("`");
-            stringBuilder.append(" WHERE `unique_id`='").append(uniqueId.toString()).append("' LIMIT 1;");
+            stringBuilder.append(" FROM ").append(table.getName());
+            stringBuilder.append(" WHERE unique_id=? LIMIT 1;");
 
-            PreparedStatement preparedStatement = Constants.getMySQL().getConnection().prepareStatement(stringBuilder.toString());
+            PreparedStatement preparedStatement = Constants.getPostgreSQL().getConnection().prepareStatement(stringBuilder.toString());
+            preparedStatement.setObject(1, uniqueId);
             ResultSet resultSet = preparedStatement.executeQuery();
 
             if (resultSet.next()) {
@@ -217,9 +221,7 @@ public class DataStorage {
                 }
             } else {
                 if (createIfNotExists) {
-                    PreparedStatement statement = Constants.getMySQL().getConnection().prepareStatement((insert(table, columns)));
-                    statement.execute();
-                    statement.close();
+                    insertRow(table, columns);
                 }
             }
 
@@ -231,98 +233,65 @@ public class DataStorage {
         }
     }
 
-    private String insert(Tables table, Columns... columns) {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append("INSERT INTO `").append(table.getName()).append("` (");
-
-        int inx = 0;
-        int max = columns.length;
-
-        stringBuilder.append("`unique_id`");
-
-        while (inx < max) {
-            Columns current = columns[inx];
-            stringBuilder.append(", `").append(current.getField()).append("`");
-            inx++;
+    private void insertRow(Tables table, Columns... columns) throws SQLException {
+        StringBuilder sql = new StringBuilder();
+        sql.append("INSERT INTO ").append(table.getName()).append(" (unique_id");
+        for (Columns c : columns) {
+            sql.append(", ").append(c.getField());
         }
-
-        stringBuilder.append(") VALUES (");
-
-        inx = 0;
-
-        stringBuilder.append("'").append(uniqueId.toString()).append("'");
-
-        while (inx < max) {
-            Columns current = columns[inx];
-            Object value = current.getDefaultValue();
-
-            if (value == null) value = "";
-
-            stringBuilder.append(", '").append(value).append("'");
-            inx++;
+        sql.append(") VALUES (?");
+        for (int i = 0; i < columns.length; i++) {
+            sql.append(", ?");
         }
-
-        stringBuilder.append(");");
-
-        return stringBuilder.toString();
+        sql.append(");");
+        PreparedStatement ps = Constants.getPostgreSQL().getConnection().prepareStatement(sql.toString());
+        int idx = 1;
+        ps.setObject(idx++, uniqueId);
+        for (Columns c : columns) {
+            Object value = getDefaultForColumn(c);
+            setParam(ps, idx++, c, value);
+        }
+        ps.execute();
+        ps.close();
     }
 
-    private String update(Tables table, Columns... columns) {
-
-        StringBuilder first = new StringBuilder();
-        StringBuilder second = new StringBuilder();
-        StringBuilder third = new StringBuilder();
-
-        first.append("INSERT INTO `").append(table.getName()).append("` (unique_id, ");
-        second.append(" VALUES('").append(this.uniqueId.toString()).append("', ");
-        third.append(" ON DUPLICATE KEY UPDATE ");
-
-        Iterator<Columns> iterator = Arrays.stream(columns).filter(c -> getData(c).hasChanged()).iterator();
-
-        if (!iterator.hasNext())
-            return "";
-
-        while (iterator.hasNext()) {
-
-            Columns column = iterator.next();
-
-            first.append(column.getField());
-
-            String toString = getData(column).getAsObject().toString();
-
-            if (iterator.hasNext())
-                first.append(", ");
-            else
-                first.append(")");
-
-            second.append("'").append(toString).append("'");
-
-            if (iterator.hasNext())
-                second.append(", ");
-            else
-                second.append(")");
-
-            third.append("`").append(column.getField()).append("`='").append(toString).append("'");
-
-            if (iterator.hasNext())
-                third.append(", ");
-
-            getData(column).setChanged(false);
+    private void upsertRow(Tables table, Columns... changedColumns) throws SQLException {
+        StringBuilder sql = new StringBuilder();
+        sql.append("INSERT INTO ").append(table.getName()).append(" (unique_id");
+        for (Columns c : changedColumns) {
+            sql.append(", ").append(c.getField());
         }
-
-        return (first.toString() + second + third);
+        sql.append(") VALUES (?");
+        for (int i = 0; i < changedColumns.length; i++) {
+            sql.append(", ?");
+        }
+        sql.append(") ON CONFLICT (unique_id) DO UPDATE SET ");
+        for (int i = 0; i < changedColumns.length; i++) {
+            Columns c = changedColumns[i];
+            sql.append(c.getField()).append("=EXCLUDED.").append(c.getField());
+            if (i < changedColumns.length - 1) sql.append(", ");
+        }
+        PreparedStatement ps = Constants.getPostgreSQL().getConnection().prepareStatement(sql.toString());
+        int idx = 1;
+        ps.setObject(idx++, uniqueId);
+        for (Columns c : changedColumns) {
+            Object value = getData(c).getAsObject();
+            setParam(ps, idx++, c, value);
+            getData(c).setChanged(false);
+        }
+        ps.executeUpdate();
+        ps.close();
     }
 
     public static void createTables() {
         try {
 
-            PreparedStatement logs = Constants.getMySQL().getConnection().prepareStatement("  CREATE TABLE IF NOT EXISTS `logs` (`index` INT UNSIGNED NOT NULL AUTO_INCREMENT,`unique_id` VARCHAR(36) NOT NULL,`nickname` VARCHAR(16) NOT NULL,`server` VARCHAR(20) NOT NULL,`content` TINYTEXT NOT NULL,`type` VARCHAR(20) NOT NULL,`created_at` DATETIME NOT NULL DEFAULT NOW(),PRIMARY KEY(`index`));");
+            PreparedStatement logs = Constants.getPostgreSQL().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS logs (id SERIAL PRIMARY KEY, unique_id UUID NOT NULL, nickname VARCHAR(16) NOT NULL, server VARCHAR(20) NOT NULL, content TEXT NOT NULL, type VARCHAR(20) NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT NOW());");
             logs.execute();
             logs.close();
 
             for (Tables tables : Tables.values()) {
-                PreparedStatement preparedStatement = Constants.getMySQL().getConnection().prepareStatement(DataStorage.createTable(tables, tables.getColumns()));
+                PreparedStatement preparedStatement = Constants.getPostgreSQL().getConnection().prepareStatement(DataStorage.createTable(tables, tables.getColumns()));
                 preparedStatement.execute();
                 preparedStatement.close();
             }
@@ -334,22 +303,22 @@ public class DataStorage {
     public static String createTable(Tables tables, Columns... columns) {
         StringBuilder stringBuilder = new StringBuilder();
 
-        stringBuilder.append("CREATE TABLE IF NOT EXISTS `").append(tables.getName()).append("` (");
-        stringBuilder.append("`index` INT UNSIGNED NOT NULL AUTO_INCREMENT,");
+        stringBuilder.append("CREATE TABLE IF NOT EXISTS ").append(tables.getName()).append(" (");
+        stringBuilder.append("id SERIAL NOT NULL,");
 
         int inx = 0;
         int max = columns.length;
 
-        stringBuilder.append("`unique_id` VARCHAR (36) UNIQUE");
+        stringBuilder.append("unique_id UUID UNIQUE");
 
         while (inx < max) {
             Columns current = columns[inx];
 
-            stringBuilder.append(", `").append(current.getField()).append("` ").append(current.getColumnType());
+            stringBuilder.append(", ").append(current.getField()).append(" ").append(current.getColumnType());
             inx++;
         }
 
-        stringBuilder.append(", PRIMARY KEY (`index`));");
+        stringBuilder.append(", PRIMARY KEY (id));");
         return stringBuilder.toString();
     }
 
@@ -363,9 +332,11 @@ public class DataStorage {
 
             switch (columns.getClassExpected()) {
                 case "JsonArray":
-                    return Constants.GSON.fromJson(obj.toString(), JsonArray.class);
+                    String jsonArrayStr = (obj instanceof PGobject) ? ((PGobject) obj).getValue() : obj.toString();
+                    return Constants.GSON.fromJson(jsonArrayStr, JsonArray.class);
                 case "JsonObject":
-                    return Constants.GSON.fromJson(obj.toString(), JsonObject.class);
+                    String jsonObjStr = (obj instanceof PGobject) ? ((PGobject) obj).getValue() : obj.toString();
+                    return Constants.GSON.fromJson(jsonObjStr, JsonObject.class);
                 case "String":
                     return obj.toString();
                 case "Int":
@@ -373,6 +344,7 @@ public class DataStorage {
                 case "Long":
                     return Long.valueOf(obj.toString());
                 case "Boolean":
+                    if (obj instanceof Boolean) return (Boolean) obj;
                     return Boolean.valueOf(obj.toString());
                 default:
                     throw new IllegalStateException();
@@ -405,4 +377,53 @@ public class DataStorage {
         return getColumnsLoaded().get(column);
     }
 
+    private void setParam(PreparedStatement ps, int index, Columns column, Object value) throws SQLException {
+        switch (column.getClassExpected()) {
+            case "JsonArray":
+            case "JsonObject":
+                PGobject jsonb = new PGobject();
+                jsonb.setType("jsonb");
+                jsonb.setValue(value == null ? (column.getClassExpected().equals("JsonArray") ? "[]" : "{}") : value.toString());
+                ps.setObject(index, jsonb);
+                break;
+            case "String":
+                ps.setString(index, value == null ? "" : value.toString());
+                break;
+            case "Int":
+                ps.setInt(index, value == null ? 0 : Integer.parseInt(value.toString()));
+                break;
+            case "Long":
+                ps.setLong(index, value == null ? 0L : Long.parseLong(value.toString()));
+                break;
+            case "Boolean":
+                boolean b = false;
+                if (value != null) {
+                    if (value instanceof Boolean) b = (Boolean) value;
+                    else b = Boolean.parseBoolean(value.toString());
+                }
+                ps.setBoolean(index, b);
+                break;
+            default:
+                throw new IllegalStateException();
+        }
+    }
+
+    private Object getDefaultForColumn(Columns column) {
+        Object def = column.getDefaultValue();
+        if (def == null) {
+            if (column.getClassExpected().equals("JsonArray")) return new JsonArray();
+            if (column.getClassExpected().equals("JsonObject")) return new JsonObject();
+            if (column.getClassExpected().equals("String")) return "";
+            if (column.getClassExpected().equals("Int")) return 0;
+            if (column.getClassExpected().equals("Long")) return 0L;
+            if (column.getClassExpected().equals("Boolean")) return false;
+        }
+        if (column.getClassExpected().equals("JsonArray") && def instanceof String) {
+            return Constants.GSON.fromJson(def.toString(), JsonArray.class);
+        }
+        if (column.getClassExpected().equals("JsonObject") && def instanceof String) {
+            return Constants.GSON.fromJson(def.toString(), JsonObject.class);
+        }
+        return def;
+    }
 }

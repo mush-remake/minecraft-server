@@ -1,15 +1,9 @@
-/*
- * Copyright (C) YoloMC, All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential.
- */
-
 package com.minecraft.core.server;
 
 import com.minecraft.core.server.packet.ServerPayload;
 import lombok.Getter;
 
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -21,7 +15,7 @@ public abstract class ServerStorage {
     private final List<Server> servers;
 
     public ServerStorage() {
-        this.servers = new ArrayList<>();
+        this.servers = new ObjectArrayList<>();
     }
 
     public abstract int myPort();

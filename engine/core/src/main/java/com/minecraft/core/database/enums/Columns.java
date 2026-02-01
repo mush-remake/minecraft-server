@@ -1,28 +1,22 @@
-/*
- * Copyright (C) YoloMC, All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- */
-
 package com.minecraft.core.database.enums;
 
 import java.util.Arrays;
 
 public enum Columns {
 
-    UNIQUE_ID(null, "String", "unique_id", "VARCHAR(36)"),
+    UNIQUE_ID(null, "String", "unique_id", "UUID"),
     USERNAME("...", "String", "username", "VARCHAR(16)"),
-    RANKS("[]", "JsonArray", "ranks", "TEXT"),
-    PERMISSIONS("[]", "JsonArray", "permissions", "TEXT"),
-    TAGS("[]", "JsonArray", "tags", "TEXT"),
-    CLANTAGS("[]", "JsonArray", "clantags", "TEXT"),
-    MEDALS("[]", "JsonArray", "medals", "TEXT"),
-    PUNISHMENTS("[]", "JsonArray", "punishments", "TEXT"),
+    RANKS("[]", "JsonArray", "ranks", "JSONB"),
+    PERMISSIONS("[]", "JsonArray", "permissions", "JSONB"),
+    TAGS("[]", "JsonArray", "tags", "JSONB"),
+    CLANTAGS("[]", "JsonArray", "clantags", "JSONB"),
+    MEDALS("[]", "JsonArray", "medals", "JSONB"),
+    PUNISHMENTS("[]", "JsonArray", "punishments", "JSONB"),
     CLAN(-1, "Int", "clan_id", "INT"),
     FLAGS(0, "Int", "flags", "INT"),
-    PREMIUM(false, "Boolean", "premium", "VARCHAR(10)"),
-    BANNED(false, "Boolean", "banned", "VARCHAR(10)"),
-    MUTED(false, "Boolean", "muted", "VARCHAR(10)"),
+    PREMIUM(false, "Boolean", "premium", "BOOLEAN"),
+    BANNED(false, "Boolean", "banned", "BOOLEAN"),
+    MUTED(false, "Boolean", "muted", "BOOLEAN"),
     FIRST_LOGIN(0L, "Long", "firstLogin", "BIGINT"),
     LAST_LOGIN(0L, "Long", "lastLogin", "BIGINT"),
     ADDRESS("...", "String", "address", "VARCHAR(50)"),
@@ -38,10 +32,9 @@ public enum Columns {
     CLANTAG("yQFBm", "String", "clantag", "VARCHAR(6)"),
     PREFIXTYPE("dMjgl", "String", "prefixtype", "VARCHAR(6)"),
     MEDAL("TaAEd", "String", "medal", "VARCHAR(6)"),
-    LANGUAGE("VIxPa", "String", "language", "VARCHAR(6)"),
     PREFERENCES(0, "Int", "preferences", "INT"),
-    SKIN("{}", "JsonObject", "skin", "TEXT"),
-    BLOCKEDS("[]", "JsonArray", "blocks", "TEXT"),
+    SKIN("{}", "JsonObject", "skin", "JSONB"),
+    BLOCKEDS("[]", "JsonArray", "blocks", "JSONB"),
 
     HG_KILLS(0, "Int", "hg_kills", "INT"),
     HG_DEATHS(0, "Int", "hg_deaths", "INT"),
@@ -62,8 +55,8 @@ public enum Columns {
     SCRIM_RANK_EXP(0, "Int", "scrim_rank_exp", "INT"),
 
     HG_COINS(0, "Int", "coins", "INT"),
-    HG_KITS("[]", "JsonArray", "kits", "TEXT"),
-    HG_DAILY_KITS("{}", "JsonObject", "dailyKit", "TEXT"),
+    HG_KITS("[]", "JsonArray", "kits", "JSONB"),
+    HG_DAILY_KITS("{}", "JsonObject", "dailyKit", "JSONB"),
 
     PVP_ARENA_KILLS(0, "Int", "arena_kills", "INT"),
     PVP_ARENA_DEATHS(0, "Int", "arena_deaths", "INT"),
@@ -75,7 +68,7 @@ public enum Columns {
     PVP_FPS_KILLSTREAK(0, "Int", "fps_killstreak", "INT"),
     PVP_FPS_MAX_KILLSTREAK(0, "Int", "fps_max_killstreak", "INT"),
 
-    PVP_DAMAGE_SETTINGS("[]", "JsonArray", "damage_settings", "TEXT"),
+    PVP_DAMAGE_SETTINGS("[]", "JsonArray", "damage_settings", "JSONB"),
 
     PVP_DAMAGE_EASY(0, "Int", "damage_easy", "INT"),
     PVP_DAMAGE_MEDIUM(0, "Int", "damage_medium", "INT"),
@@ -86,7 +79,7 @@ public enum Columns {
     PVP_RANK_EXP(0, "Int", "rank_exp", "INT"),
 
     PVP_COINS(0, "Int", "coins", "INT"),
-    PVP_KITS("[]", "JsonArray", "kits", "TEXT"),
+    PVP_KITS("[]", "JsonArray", "kits", "JSONB"),
 
     DUELS_SOUP_WINS(0, "Int", "soup_wins", "INT"),
     DUELS_SOUP_LOSSES(0, "Int", "soup_losses", "INT"),
@@ -94,7 +87,7 @@ public enum Columns {
     DUELS_SOUP_MAX_WINSTREAK(0, "Int", "soup_max_winstreak", "INT"),
     DUELS_SOUP_GAMES(0, "Int", "soup_games", "INT"),
     DUELS_SOUP_RATING(1500, "Int", "soup_rating", "INT"),
-    DUELS_SOUP_INVENTORY("...", "String", "soup_inventory", "VARCHAR(5000)"),
+    DUELS_SOUP_INVENTORY("...", "String", "soup_inventory", "TEXT"),
 
     DUELS_SIMULATOR_WINS(0, "Int", "simulator_wins", "INT"),
     DUELS_SIMULATOR_LOSSES(0, "Int", "simulator_losses", "INT"),
@@ -102,7 +95,7 @@ public enum Columns {
     DUELS_SIMULATOR_MAX_WINSTREAK(0, "Int", "simulator_max_winstreak", "INT"),
     DUELS_SIMULATOR_GAMES(0, "Int", "simulator_games", "INT"),
     DUELS_SIMULATOR_RATING(1500, "Int", "simulator_rating", "INT"),
-    DUELS_SIMULATOR_INVENTORY("...", "String", "simulator_inventory", "VARCHAR(5000)"),
+    DUELS_SIMULATOR_INVENTORY("...", "String", "simulator_inventory", "TEXT"),
 
     DUELS_UHC_WINS(0, "Int", "uhc_wins", "INT"),
     DUELS_UHC_LOSSES(0, "Int", "uhc_losses", "INT"),
@@ -110,7 +103,7 @@ public enum Columns {
     DUELS_UHC_MAX_WINSTREAK(0, "Int", "uhc_max_winstreak", "INT"),
     DUELS_UHC_GAMES(0, "Int", "uhc_games", "INT"),
     DUELS_UHC_RATING(1500, "Int", "uhc_rating", "INT"),
-    DUELS_UHC_INVENTORY("...", "String", "uhc_inventory", "VARCHAR(5000)"),
+    DUELS_UHC_INVENTORY("...", "String", "uhc_inventory", "TEXT"),
 
     DUELS_SUMO_WINS(0, "Int", "sumo_wins", "INT"),
     DUELS_SUMO_LOSSES(0, "Int", "sumo_losses", "INT"),
@@ -118,7 +111,7 @@ public enum Columns {
     DUELS_SUMO_MAX_WINSTREAK(0, "Int", "sumo_max_winstreak", "INT"),
     DUELS_SUMO_GAMES(0, "Int", "sumo_games", "INT"),
     DUELS_SUMO_RATING(1500, "Int", "sumo_rating", "INT"),
-    DUELS_SUMO_INVENTORY("...", "String", "sumo_inventory", "VARCHAR(5000)"),
+    DUELS_SUMO_INVENTORY("...", "String", "sumo_inventory", "TEXT"),
 
     DUELS_SCRIM_WINS(0, "Int", "scrim_wins", "INT"),
     DUELS_SCRIM_LOSSES(0, "Int", "scrim_losses", "INT"),
@@ -126,7 +119,7 @@ public enum Columns {
     DUELS_SCRIM_MAX_WINSTREAK(0, "Int", "scrim_max_winstreak", "INT"),
     DUELS_SCRIM_GAMES(0, "Int", "scrim_games", "INT"),
     DUELS_SCRIM_RATING(1500, "Int", "scrim_rating", "INT"),
-    DUELS_SCRIM_INVENTORY("...", "String", "scrim_inventory", "VARCHAR(5000)"),
+    DUELS_SCRIM_INVENTORY("...", "String", "scrim_inventory", "TEXT"),
 
     DUELS_GLADIATOR_WINS(0, "Int", "gladiator_wins", "INT"),
     DUELS_GLADIATOR_LOSSES(0, "Int", "gladiator_losses", "INT"),
@@ -134,9 +127,9 @@ public enum Columns {
     DUELS_GLADIATOR_MAX_WINSTREAK(0, "Int", "gladiator_max_winstreak", "INT"),
     DUELS_GLADIATOR_GAMES(0, "Int", "gladiator_games", "INT"),
     DUELS_GLADIATOR_RATING(1500, "Int", "gladiator_rating", "INT"),
-    DUELS_GLADIATOR_INVENTORY("...", "String", "gladiator_inventory", "VARCHAR(5000)"),
+    DUELS_GLADIATOR_INVENTORY("...", "String", "gladiator_inventory", "TEXT"),
     DUELS_GLADIATOR_OLD_RATING(1500, "Int", "old_soup_rating", "INT"),
-    DUELS_GLADIATOR_OLD_INVENTORY("...", "String", "old_gladiator_inventory", "VARCHAR(5000)"),
+    DUELS_GLADIATOR_OLD_INVENTORY("...", "String", "old_gladiator_inventory", "TEXT"),
 
     DUELS_BOXING_WINS(0, "Int", "boxing_wins", "INT"),
     DUELS_BOXING_LOSSES(0, "Int", "boxing_losses", "INT"),
@@ -144,7 +137,7 @@ public enum Columns {
     DUELS_BOXING_MAX_WINSTREAK(0, "Int", "boxing_max_winstreak", "INT"),
     DUELS_BOXING_GAMES(0, "Int", "boxing_games", "INT"),
     DUELS_BOXING_RATING(1500, "Int", "boxing_rating", "INT"),
-    DUELS_BOXING_INVENTORY("...", "String", "boxing_inventory", "VARCHAR(5000)"),
+    DUELS_BOXING_INVENTORY("...", "String", "boxing_inventory", "TEXT"),
 
     BRIDGE_SOLO_WINS(0, "Int", "solo_wins", "INT"),
     BRIDGE_SOLO_LOSSES(0, "Int", "solo_losses", "INT"),
@@ -167,7 +160,7 @@ public enum Columns {
     BRIDGE_COINS(0, "Int", "coins", "INT"),
     BRIDGE_RANK(1, "Int", "rank", "INT"),
     BRIDGE_RANK_EXP(0, "Int", "rank_exp", "INT"),
-    BRIDGE_DATA("[]", "JsonArray", "data", "TEXT"),
+    BRIDGE_DATA("[]", "JsonArray", "data", "JSONB"),
 
     STAFF_WEEKLY_BANS(0, "Int", "weekly_bans", "INT"),
     STAFF_WEEKLY_MUTES(0, "Int", "weekly_mutes", "INT"),
